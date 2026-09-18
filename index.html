@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#191310">
-<title>後天八卦二十四山羅盤 v1.4.0</title>
+<title>後天八卦二十四山羅盤 v1.6.0</title>
 <style>
   :root{
     --text:#f2e9dc; --dim:#c3b39c; --accent:#e05a5f; --gold:#d8a94f;
@@ -102,11 +102,11 @@
   /* 頁籤列 */
   #tabs{display:flex;gap:4px;padding:5px;}
   #tabs button{flex:1;background:transparent;border:none;color:var(--dim);border-radius:10px;
-    padding:6px 2px 5px;font-size:10px;font-weight:700;display:flex;flex-direction:column;
-    align-items:center;gap:1px;touch-action:manipulation;}
-  #tabs button .ic{font-size:16px;line-height:1.1;}
+    padding:6px 1px 5px;font-size:9.5px;font-weight:700;display:flex;flex-direction:column;
+    align-items:center;gap:1px;touch-action:manipulation;white-space:nowrap;}
+  #tabs button .ic{font-size:15px;line-height:1.1;}
   #tabs button.on{background:var(--glass-2);color:var(--accent);}
-  #tabs .savebtn{flex:0 0 46px;color:#fff;background:var(--accent);}
+  #tabs .savebtn{flex:0 0 42px;color:#fff;background:var(--accent);}
   #tabs .savebtn.on{background:var(--accent);color:#fff;}
 
   #toast{position:absolute;left:50%;bottom:calc(120px + var(--safe-b));transform:translateX(-50%) translateY(10px);
@@ -131,8 +131,8 @@
     <div id="readout" class="glass">
       <div class="cp"><span class="lbl">羅盤</span><b id="roCompass">0.0°</b></div>
       <div class="hd" id="roHeadingRow" style="display:none;"><span class="lbl">方位</span><b id="roHeading">--</b></div>
-      <div class="ln" id="roLineRow" style="display:none;"><span class="lbl">紅線</span><b id="roLine">--</b></div>
-      <div class="verrow"><span class="ver" id="verTag">v1.4.0</span></div>
+      <div class="ln" id="roLineRow" style="display:none;"><span class="lbl">十字線</span><b id="roLine">--</b></div>
+      <div class="verrow"><span class="ver" id="verTag">v1.6.0</span></div>
     </div>
 
     <div id="dock">
@@ -216,7 +216,7 @@
 
         <div class="panel glass" id="p-line">
           <div class="rowx">
-            <button class="btn p" id="addLine">➕ 新增紅線</button>
+            <button class="btn p" id="addLine">➕ 新增十字線</button>
             <button class="btn" id="delLine">🗑️ 刪除</button>
             <span class="rowx" id="lineChips" style="gap:4px;"></span>
           </div>
@@ -226,7 +226,37 @@
             <button class="btn sm" id="lRotR1">1↻</button>
             <button class="btn sm" id="lRotR">15↻</button>
           </div>
-          <div class="note">選取紅線後，在畫面上拖曳即可自由旋轉指向。</div>
+          <div class="note">每按一次新增一組垂直十字線，兩軸恆保持 90°。選取後在畫面上拖曳即可整組旋轉，紅點所指即為主軸方位角。</div>
+        </div>
+
+        <div class="panel glass" id="p-group">
+          <div class="rowx">
+            <div class="dpad">
+              <span></span><button class="btn" id="gUp">▲</button><span></span>
+              <button class="btn" id="gLeft">◀</button>
+              <button class="btn" id="gCenter">◎</button>
+              <button class="btn" id="gRight">▶</button>
+              <span></span><button class="btn" id="gDown">▼</button><span></span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px;">
+              <div class="seg">
+                <button class="btn" id="gZoomOut">－</button>
+                <button class="btn" id="gZoomIn">＋</button>
+                <button class="btn" id="gReset">重設</button>
+              </div>
+              <div class="seg">
+                <button class="btn sm" id="gRotL">↺15</button>
+                <button class="btn sm" id="gRotL1">↺1</button>
+                <button class="btn sm" id="gRotR1">1↻</button>
+                <button class="btn sm" id="gRotR">15↻</button>
+              </div>
+            </div>
+          </div>
+          <div class="rowx">
+            <span class="lbl-s">群組角度</span><span class="val-s" id="gRotVal">0.0°</span>
+            <span class="lbl-s">倍率</span><span class="val-s" id="gScaleVal">100%</span>
+          </div>
+          <div class="note">底圖＋羅盤＋十字線視為同一整體一起位移／旋轉／縮放，各層之間的相對關係完全不變。在此頁直接拖曳＝整體移動，雙指＝整體縮放旋轉。</div>
         </div>
 
       </div>
@@ -235,7 +265,8 @@
         <button data-tab="compass" class="on"><span class="ic">☯</span>羅盤</button>
         <button data-tab="bg"><span class="ic">🖼️</span>底圖</button>
         <button data-tab="heading"><span class="ic">🧭</span>方位</button>
-        <button data-tab="line"><span class="ic">📏</span>紅線</button>
+        <button data-tab="line"><span class="ic">✛</span>十字線</button>
+        <button data-tab="group"><span class="ic">🔗</span>全部</button>
         <button class="savebtn" id="saveBtn"><span class="ic">💾</span>存圖</button>
       </div>
     </div>
@@ -249,9 +280,9 @@
   "use strict";
 
   /* =============== 版本 =============== */
-  var APP_VERSION = 'v1.4.0';
+  var APP_VERSION = 'v1.6.0';
   var APP_DATE    = '2026-09-18';
-  var CHANGELOG   = 'v1.4.0（2026-09-18）全部文字加上自動配色描邊';
+  var CHANGELOG   = 'v1.6.0（2026-09-18）新增「全部」群組模式，底圖＋羅盤＋十字線可綁在一起同步位移／旋轉／縮放';
 
   /* =============== 狀態 =============== */
   var S = {
@@ -259,6 +290,7 @@
     compass: { imgBg:null, imgFg:null, natW:1600, natH:1600, x:0, y:0, scale:1, rot:0, bgAlpha:0.70 },
     lines: [],
     activeLine: null,
+    group: { x:0, y:0, scale:1, rot:0 },
     mode: 'compass',
     heading: null,
     follow: false
@@ -273,6 +305,21 @@
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
   function n360(v){ v = v % 360; if(v < 0) v += 360; return v; }
   function fmt(v){ return v.toFixed(1) + '°'; }
+
+  /* 群組旋轉後，實際呈現在畫面上的角度 */
+  function effCompass(){ return n360(S.compass.rot + S.group.rot); }
+  function effLine(L){ return n360(L.angle + S.group.rot); }
+
+  /* 十字線錨點（羅盤中心）經群組變換後的螢幕座標 */
+  function anchorScreen(){
+    var G = S.group;
+    var vx = S.compass.x, vy = S.compass.y;
+    var r = G.rot * Math.PI/180, s = G.scale;
+    return {
+      x: W/2 + G.x + (vx*Math.cos(r) - vy*Math.sin(r)) * s,
+      y: H/2 + G.y + (vx*Math.sin(r) + vy*Math.cos(r)) * s
+    };
+  }
 
   var toastEl = document.getElementById('toast'), toastT = null;
   function toast(m){
@@ -304,6 +351,14 @@
     c.fillStyle = stageColor();
     c.fillRect(0,0,w,h);
     var cx = w/2, cy = h/2;
+
+    /* ---- 群組變換：底圖＋羅盤＋十字線一起位移／旋轉／縮放 ---- */
+    var G = S.group;
+    c.save();
+    c.translate(cx + G.x, cy + G.y);
+    c.rotate(G.rot * Math.PI/180);
+    c.scale(G.scale, G.scale);
+    c.translate(-cx, -cy);
 
     if(S.bg.img){
       var b = S.bg;
@@ -342,16 +397,26 @@
       c.translate(ax, ay);
       c.rotate(L.angle * Math.PI/180);
       c.strokeStyle = '#ff0000';
+      c.globalAlpha = on ? 1 : .8;
+      /* 主軸：紅點所指的方位 */
       c.lineWidth = on ? 4 : 2.6;
-      c.globalAlpha = on ? 1 : .85;
       c.beginPath(); c.moveTo(0,-R); c.lineTo(0,R); c.stroke();
+      /* 垂直軸：恆與主軸維持 90°，隨主軸同步旋轉 */
+      c.lineWidth = on ? 3 : 2;
+      c.beginPath(); c.moveTo(-R,0); c.lineTo(R,0); c.stroke();
       c.globalAlpha = 1;
+      /* 每組十字線只有一個紅點，標示主軸方位角 */
       if(on){
         c.fillStyle = '#ff0000';
-        c.beginPath(); c.arc(0, -Math.min(w,h)*0.44, 5.5, 0, Math.PI*2); c.fill();
+        c.beginPath(); c.arc(0, -Math.min(w,h)*0.44, 6, 0, Math.PI*2); c.fill();
+        c.strokeStyle = '#ffffff';
+        c.lineWidth = 1.5;
+        c.beginPath(); c.arc(0, -Math.min(w,h)*0.44, 6, 0, Math.PI*2); c.stroke();
       }
       c.restore();
     });
+
+    c.restore();  /* ---- 結束群組變換 ---- */
 
     if(withInfo) drawInfo(c, w, h);
     c.restore();
@@ -360,10 +425,10 @@
   /* 匯出圖片上要保留的角度值（不含任何功能鍵） */
   function drawInfo(c, w, h){
     var lines = [];
-    lines.push({ t:'羅盤 ' + fmt(S.compass.rot), col:'#ffd88a' });
+    lines.push({ t:'羅盤 ' + fmt(effCompass()), col:'#ffd88a' });
     if(S.heading != null) lines.push({ t:'方位 ' + fmt(S.heading), col:'#ff9a9e' });
     S.lines.forEach(function(L, i){
-      lines.push({ t:'紅線' + (i+1) + ' ' + fmt(L.angle), col:'#ff6b6b' });
+      lines.push({ t:'十字' + (i+1) + ' ' + fmt(effLine(L)), col:'#ff6b6b' });
     });
 
     var fs = clamp(Math.round(Math.min(w,h) * 0.035), 12, 22);
@@ -428,22 +493,22 @@
 
   /* =============== 讀數列 =============== */
   function syncReadout(){
-    document.getElementById('roCompass').textContent = fmt(S.compass.rot);
+    document.getElementById('roCompass').textContent = fmt(effCompass());
     var hr = document.getElementById('roHeadingRow');
     if(S.heading != null){ hr.style.display = 'flex'; document.getElementById('roHeading').textContent = fmt(S.heading); }
     else hr.style.display = 'none';
     var lr = document.getElementById('roLineRow');
     var L = S.lines.find(function(x){ return x.id === S.activeLine; });
-    if(L){ lr.style.display = 'flex'; document.getElementById('roLine').textContent = fmt(L.angle); }
+    if(L){ lr.style.display = 'flex'; document.getElementById('roLine').textContent = fmt(effLine(L)); }
     else lr.style.display = 'none';
   }
 
   /* =============== 頁籤 =============== */
   var tabBtns = document.querySelectorAll('#tabs button[data-tab]');
-  var modeOf = { compass:'compass', bg:'bg', heading:'none', line:'line' };
+  var modeOf = { compass:'compass', bg:'bg', heading:'none', line:'line', group:'group' };
   function setTab(name){
     tabBtns.forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-tab') === name); });
-    ['compass','bg','heading','line'].forEach(function(k){
+    ['compass','bg','heading','line','group'].forEach(function(k){
       document.getElementById('p-' + k).classList.toggle('active', k === name);
     });
     S.mode = modeOf[name];
@@ -472,6 +537,7 @@
   function pair(){ var ids = Array.from(pts.keys()); return [pts.get(ids[0]), pts.get(ids[1])]; }
 
   function pickLayer(){
+    if(S.mode === 'group') return 'group';
     if(S.mode === 'line' && S.activeLine != null) return 'line';
     if(S.mode === 'bg' && S.bg.img) return 'bg';
     if(S.mode === 'compass') return 'compass';
@@ -481,7 +547,8 @@
   function beginPinch(){
     var p = pair(); if(!p[0] || !p[1]) return;
     var layer = null;
-    if(S.mode === 'bg' && S.bg.img) layer = 'bg';
+    if(S.mode === 'group') layer = 'group';
+    else if(S.mode === 'bg' && S.bg.img) layer = 'bg';
     else if(S.mode === 'compass' || S.mode === 'line') layer = 'compass';
     if(!layer){ gest = null; return; }
     gest = {
@@ -524,14 +591,16 @@
     var p = firstPos(); if(!p) return;
     if(!lastP){ lastP = p; return; }
     var dx = p.x - lastP.x, dy = p.y - lastP.y;
-    if(dragLayer === 'bg'){ S.bg.x += dx; S.bg.y += dy; draw(); }
+    if(dragLayer === 'group'){ S.group.x += dx; S.group.y += dy; draw(); }
+    else if(dragLayer === 'bg'){ S.bg.x += dx; S.bg.y += dy; draw(); }
     else if(dragLayer === 'compass'){ S.compass.x += dx; S.compass.y += dy; draw(); }
     else if(dragLayer === 'line'){
-      var ax = W/2 + S.compass.x, ay = H/2 + S.compass.y;
-      var vx = p.x - ax, vy = p.y - ay;
+      var a = anchorScreen();
+      var vx = p.x - a.x, vy = p.y - a.y;
       if(Math.hypot(vx,vy) > 8){
         var L = S.lines.find(function(x){ return x.id === S.activeLine; });
-        if(L){ L.angle = n360(Math.atan2(vx, -vy) * 180/Math.PI); draw(); syncReadout(); }
+        /* 扣掉群組旋轉，存回十字線自身的角度 */
+        if(L){ L.angle = n360(Math.atan2(vx, -vy) * 180/Math.PI - S.group.rot); draw(); syncReadout(); }
       }
     }
     lastP = p;
@@ -546,7 +615,7 @@
     o.scale = clamp(gest.s0 * (d / (gest.d0 || 1)), 0.15, 10);
     o.rot = n360(gest.r0 + (a - gest.a0));
     draw();
-    if(gest.layer === 'compass'){ S.follow = false; updFollowBtn(); syncReadout(); }
+    if(gest.layer === 'compass' || gest.layer === 'group'){ S.follow = false; updFollowBtn(); syncReadout(); }
   }
 
   /* =============== 羅盤控制 =============== */
@@ -590,7 +659,7 @@
   });
 
   /* 輸入度數 → 轉到正上方 */
-  function aimDegree(d){ S.compass.rot = n360(180 - n360(d)); }
+  function aimDegree(d){ S.compass.rot = n360(180 - n360(d) - S.group.rot); }
   document.getElementById('degGo').addEventListener('click', function(){
     var v = parseFloat(document.getElementById('degIn').value);
     if(isNaN(v)){ toast('請輸入有效度數（0–359.9）'); return; }
@@ -705,39 +774,68 @@
   });
   updFollowBtn();
 
-  /* =============== 紅線 =============== */
+  /* =============== 十字線 =============== */
   var chipsEl = document.getElementById('lineChips');
   function renderChips(){
     chipsEl.innerHTML = '';
     S.lines.forEach(function(L, i){
       var c = document.createElement('button');
       c.className = 'chip' + (L.id === S.activeLine ? ' on' : '');
-      c.textContent = '線' + (i+1);
+      c.textContent = '✛' + (i+1);
       c.addEventListener('click', function(){ S.activeLine = L.id; renderChips(); syncReadout(); draw(); });
       chipsEl.appendChild(c);
     });
   }
   document.getElementById('addLine').addEventListener('click', function(){
-    if(S.lines.length >= 12){ toast('最多 12 條紅線'); return; }
+    if(S.lines.length >= 12){ toast('最多 12 組十字線'); return; }
     var id = nextLineId++;
     S.lines.push({ id:id, angle:0 });
     S.activeLine = id; setTab('line'); renderChips(); syncReadout(); draw();
   });
   document.getElementById('delLine').addEventListener('click', function(){
-    if(S.activeLine == null){ toast('沒有可刪除的紅線'); return; }
+    if(S.activeLine == null){ toast('沒有可刪除的十字線'); return; }
     S.lines = S.lines.filter(function(L){ return L.id !== S.activeLine; });
     S.activeLine = S.lines.length ? S.lines[S.lines.length-1].id : null;
     renderChips(); syncReadout(); draw();
   });
   function lRot(d){
     var L = S.lines.find(function(x){ return x.id === S.activeLine; });
-    if(!L){ toast('請先新增或選取紅線'); return; }
+    if(!L){ toast('請先新增或選取十字線'); return; }
     L.angle = n360(L.angle + d); draw(); syncReadout();
   }
   document.getElementById('lRotL').addEventListener('click', function(){ lRot(-15); });
   document.getElementById('lRotL1').addEventListener('click', function(){ lRot(-1); });
   document.getElementById('lRotR1').addEventListener('click', function(){ lRot(1); });
   document.getElementById('lRotR').addEventListener('click', function(){ lRot(15); });
+
+  /* =============== 群組（底圖＋羅盤＋十字線一起變換） =============== */
+  function syncGroupUI(){
+    document.getElementById('gRotVal').textContent = fmt(S.group.rot);
+    document.getElementById('gScaleVal').textContent = Math.round(S.group.scale*100) + '%';
+  }
+  function gMove(dx,dy){ S.group.x += dx; S.group.y += dy; draw(); }
+  function gScale(f){ S.group.scale = clamp(S.group.scale*f, 0.15, 10); draw(); syncGroupUI(); }
+  function gRot(d){
+    S.group.rot = n360(S.group.rot + d);
+    S.follow = false; updFollowBtn();
+    draw(); syncGroupUI(); syncReadout();
+  }
+  document.getElementById('gUp').addEventListener('click', function(){ gMove(0,-STEP); });
+  document.getElementById('gDown').addEventListener('click', function(){ gMove(0,STEP); });
+  document.getElementById('gLeft').addEventListener('click', function(){ gMove(-STEP,0); });
+  document.getElementById('gRight').addEventListener('click', function(){ gMove(STEP,0); });
+  document.getElementById('gCenter').addEventListener('click', function(){ S.group.x=0; S.group.y=0; draw(); });
+  document.getElementById('gZoomIn').addEventListener('click', function(){ gScale(1.12); });
+  document.getElementById('gZoomOut').addEventListener('click', function(){ gScale(1/1.12); });
+  document.getElementById('gRotL').addEventListener('click', function(){ gRot(-15); });
+  document.getElementById('gRotL1').addEventListener('click', function(){ gRot(-1); });
+  document.getElementById('gRotR1').addEventListener('click', function(){ gRot(1); });
+  document.getElementById('gRotR').addEventListener('click', function(){ gRot(15); });
+  document.getElementById('gReset').addEventListener('click', function(){
+    S.group.x=0; S.group.y=0; S.group.scale=1; S.group.rot=0;
+    draw(); syncGroupUI(); syncReadout();
+    toast('群組變換已重設（各圖層自身設定不變）');
+  });
 
   /* =============== 存成圖片（不含功能鍵、保留角度值） =============== */
   var dlCap = null;
@@ -800,6 +898,7 @@
   renderChips();
   syncReadout();
   syncAlphaUI();
+  syncGroupUI();
 
   var verTag = document.getElementById('verTag');
   verTag.textContent = APP_VERSION;
