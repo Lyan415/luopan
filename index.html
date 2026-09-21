@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#191310">
-<title>後天八卦二十四山羅盤 v1.7.0</title>
+<title>後天八卦二十四山羅盤 v1.8.0</title>
 <style>
   :root{
     --text:#f2e9dc; --dim:#c3b39c; --accent:#e05a5f; --gold:#d8a94f;
@@ -111,6 +111,7 @@
 
   .icobtn.gl{width:auto;padding:0 9px;font-size:11px;font-weight:800;white-space:nowrap;}
   #readout .nd b{color:#9fd3ff;}
+  .sz{font-size:17px;font-weight:900;color:#ff6b6b;letter-spacing:1px;}
   #needleModeSeg .btn.on{background:var(--accent);border-color:var(--accent);color:#fff;}
   #mdW.on,#mdE.on{background:var(--accent);border-color:var(--accent);color:#fff;}
   #metaDlg{position:absolute;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
@@ -145,7 +146,7 @@
       <div class="hd" id="roHeadingRow" style="display:none;"><span class="lbl">方位</span><b id="roHeading">--</b></div>
       <div class="ln" id="roLineRow" style="display:none;"><span class="lbl">十字線</span><b id="roLine">--</b></div>
       <div class="nd" id="roNeedleRow" style="display:none;"><span class="lbl" id="roNeedleLbl">磁針</span><b id="roNeedle">--</b></div>
-      <div class="verrow"><span class="ver" id="verTag">v1.7.0</span></div>
+      <div class="verrow"><span class="ver" id="verTag">v1.8.0</span></div>
     </div>
 
     <div id="dock">
@@ -257,7 +258,10 @@
             <button class="btn sm" id="lRotR1">1↻</button>
             <button class="btn sm" id="lRotR">15↻</button>
           </div>
-          <div class="note">每按一次新增一組垂直十字線，兩軸恆保持 90°。選取後在畫面上拖曳即可整組旋轉，紅點所指即為主軸方位角。</div>
+          <div class="rowx">
+            <span class="lbl-s">坐向</span><b id="lineSZ" class="sz">—</b>
+          </div>
+          <div class="note">每按一次新增一組十字線：實線為主軸、虛線為垂直軸，恆保持 90°。紅點沿天池邊緣標示主軸所「向」，對面即為所「坐」；刻度依羅盤印製度數計算。選取後在畫面上拖曳即可整組旋轉。</div>
         </div>
 
         <div class="panel glass" id="p-group">
@@ -336,9 +340,9 @@
   "use strict";
 
   /* =============== 版本 =============== */
-  var APP_VERSION = 'v1.7.0';
+  var APP_VERSION = 'v1.8.0';
   var APP_DATE    = '2026-09-21';
-  var CHANGELOG   = 'v1.7.0（2026-09-21）更換羅盤圖、新增模擬磁針（A 刻度／B 底圖／C 指南針）、雙指手勢鎖定、底圖方位與磁偏角設定、修正群組旋轉後方向鍵方向';
+  var CHANGELOG   = 'v1.8.0（2026-09-21）十字線改細、主軸實線／垂直軸虛線、紅點改沿天池邊緣、新增二十四山坐向顯示';
 
   /* =============== 狀態 =============== */
   var S = {
@@ -358,7 +362,18 @@
     gesture: 'both'
   };
   var NEEDLE_SIZE = 169.4;   /* 磁針圖寬＝天池直徑（羅盤座標單位） */
-  var NEEDLE_K    = 1.00;    /* 1:1 時牛角覆蓋海底線紅點最多，放大或縮小都會變少 */
+  var NEEDLE_K    = 1.00;
+  var TIANCHI_R   = 84.7;    /* 天池半徑（羅盤座標單位） */
+  /* 二十四山：自 0°（子）起每 15° 一山，子山範圍 352.5°～7.5° */
+  var MOUNTAINS = ['子','癸','丑','艮','寅','甲','卯','乙','辰','巽','巳','丙',
+                   '午','丁','未','坤','申','庚','酉','辛','戌','乾','亥','壬'];
+  function mountainOf(d){ return MOUNTAINS[Math.floor(n360(d + 7.5) / 15) % 24]; }
+  /* 十字線紅點所指的羅盤刻度（紅點方向＝向） */
+  function lineDial(L){ return n360(L.angle - 180 - S.compass.rot); }
+  function zuoXiang(L){
+    var d = lineDial(L);
+    return '坐' + mountainOf(d + 180) + '向' + mountainOf(d);
+  }    /* 1:1 時牛角覆蓋海底線紅點最多，放大或縮小都會變少 */
   var nextLineId = 1;
 
   var canvas = document.getElementById('stage');
@@ -496,28 +511,33 @@
     }
 
     var ax = cx + S.compass.x, ay = cy + S.compass.y;
-    var R = Math.hypot(w,h);
+    var R = Math.hypot(w,h) / (G.scale || 1);
+    var gs = 1 / (G.scale || 1);   /* 抵銷群組縮放，線寬與虛線間距維持固定像素 */
+    var poolR = TIANCHI_R * (Math.min(w,h) * 0.94) / S.compass.natW * S.compass.scale;  /* 天池半徑（畫面） */
     S.lines.forEach(function(L){
       var on = (L.id === S.activeLine);
       c.save();
       c.translate(ax, ay);
       c.rotate(L.angle * Math.PI/180);
       c.strokeStyle = '#ff0000';
-      c.globalAlpha = on ? 1 : .8;
-      /* 主軸：紅點所指的方位 */
-      c.lineWidth = on ? 4 : 2.6;
+      c.globalAlpha = on ? 1 : .75;
+      /* 主軸：實線 */
+      c.setLineDash([]);
+      c.lineWidth = (on ? 1.8 : 1.2) * gs;
       c.beginPath(); c.moveTo(0,-R); c.lineTo(0,R); c.stroke();
-      /* 垂直軸：恆與主軸維持 90°，隨主軸同步旋轉 */
-      c.lineWidth = on ? 3 : 2;
+      /* 垂直軸：虛線，恆與主軸維持 90° */
+      c.setLineDash([7*gs, 5*gs]);
+      c.lineWidth = (on ? 1.4 : 1.0) * gs;
       c.beginPath(); c.moveTo(-R,0); c.lineTo(R,0); c.stroke();
+      c.setLineDash([]);
       c.globalAlpha = 1;
-      /* 每組十字線只有一個紅點，標示主軸方位角 */
+      /* 紅點：沿天池邊緣繞行，標示主軸所向 */
       if(on){
         c.fillStyle = '#ff0000';
-        c.beginPath(); c.arc(0, -Math.min(w,h)*0.44, 6, 0, Math.PI*2); c.fill();
+        c.beginPath(); c.arc(0, -poolR, 4.5*gs, 0, Math.PI*2); c.fill();
         c.strokeStyle = '#ffffff';
-        c.lineWidth = 1.5;
-        c.beginPath(); c.arc(0, -Math.min(w,h)*0.44, 6, 0, Math.PI*2); c.stroke();
+        c.lineWidth = 1.2*gs;
+        c.beginPath(); c.arc(0, -poolR, 4.5*gs, 0, Math.PI*2); c.stroke();
       }
       c.restore();
     });
@@ -536,7 +556,7 @@
     var nd = needleOnDial();
     if(S.needle.mode !== 'off' && nd != null) lines.push({ t:'磁針' + S.needle.mode + ' ' + fmt(nd), col:'#9fd3ff' });
     S.lines.forEach(function(L, i){
-      lines.push({ t:'十字' + (i+1) + ' ' + fmt(effLine(L)), col:'#ff6b6b' });
+      lines.push({ t:'十字' + (i+1) + ' ' + zuoXiang(L) + ' ' + fmt(lineDial(L)), col:'#ff6b6b' });
     });
 
     var fs = clamp(Math.round(Math.min(w,h) * 0.035), 12, 22);
@@ -612,7 +632,9 @@
     else hr.style.display = 'none';
     var lr = document.getElementById('roLineRow');
     var L = S.lines.find(function(x){ return x.id === S.activeLine; });
-    if(L){ lr.style.display = 'flex'; document.getElementById('roLine').textContent = fmt(effLine(L)); }
+    if(L){ lr.style.display = 'flex'; document.getElementById('roLine').textContent = zuoXiang(L) + ' ' + fmt(lineDial(L)); }
+    var sz = document.getElementById('lineSZ');
+    if(sz) sz.textContent = L ? (zuoXiang(L) + '　' + fmt(lineDial(L))) : '—';
     else lr.style.display = 'none';
     var nrw = document.getElementById('roNeedleRow');
     var nd = needleOnDial();
