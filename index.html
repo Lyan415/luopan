@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#191310">
-<title>後天八卦二十四山羅盤 v1.9.0</title>
+<title>後天八卦二十四山羅盤 v1.9.1</title>
 <style>
   :root{
     --text:#f2e9dc; --dim:#c3b39c; --accent:#e05a5f; --gold:#d8a94f;
@@ -109,7 +109,9 @@
   #tabs .savebtn{flex:0 0 42px;color:#fff;background:var(--accent);}
   #tabs .savebtn.on{background:var(--accent);color:#fff;}
 
-  .icobtn.gl{width:auto;padding:0 9px;font-size:11px;font-weight:800;white-space:nowrap;}
+  .icobtn.gl{width:auto;padding:0 10px;font-size:11.5px;font-weight:800;white-space:nowrap;color:#fff;}
+  .icobtn.gl.gs-scale{background:#2563b8;border-color:#5b95e0;}
+  .icobtn.gl.gs-rotate{background:#c26a0e;border-color:#f0a24a;}
   #readout .nd b{color:#9fd3ff;}
   #readout .ph b{color:#ffb86b;}
   input.rotin{width:74px;}
@@ -140,7 +142,7 @@
     <div id="topLeft">
       <button class="icobtn" id="hideUiBtn" title="隱藏操作介面">👁️</button>
       <button class="icobtn" id="themeBtn" title="背景深淺">🌓</button>
-      <button class="icobtn gl" id="gestureBtn" title="多點觸控模式">縮＋轉</button>
+      <button class="icobtn gl gs-scale" id="gestureBtn" title="多點觸控模式">🔍 僅縮放</button>
     </div>
 
     <div id="readout" class="glass">
@@ -149,7 +151,7 @@
       <div class="ln" id="roLineRow" style="display:none;"><span class="lbl">十字線</span><b id="roLine">--</b></div>
       <div class="ph" id="roPhoneRow" style="display:none;"><span class="lbl">紅點手機方位</span><b id="roPhone">--</b></div>
       <div class="nd" id="roNeedleRow" style="display:none;"><span class="lbl" id="roNeedleLbl">磁針</span><b id="roNeedle">--</b></div>
-      <div class="verrow"><span class="ver" id="verTag">v1.9.0</span></div>
+      <div class="verrow"><span class="ver" id="verTag">v1.9.1</span></div>
     </div>
 
     <div id="dock">
@@ -371,9 +373,9 @@
   "use strict";
 
   /* =============== 版本 =============== */
-  var APP_VERSION = 'v1.9.0';
+  var APP_VERSION = 'v1.9.1';
   var APP_DATE    = '2026-09-22';
-  var CHANGELOG   = 'v1.9.0（2026-09-22）新增紅點手機方位、各圖層旋轉角度輸入、群組以載入底圖當下為 0°；修正刪除最後一條十字線後讀數未隱藏';
+  var CHANGELOG   = 'v1.9.1（2026-09-22）雙指手勢改為「僅縮放／僅旋轉」二選一，按鍵以藍／橘兩色區分';
 
   /* =============== 狀態 =============== */
   var S = {
@@ -389,8 +391,8 @@
     bgMeta: { top:0, dec:-5 },
     /* 磁針：mode A＝羅盤刻度、B＝依底圖、C＝手機指南針、off＝隱藏 */
     needle: { img:null, mode:'A', degA:0, lastC:null },
-    /* 多點觸控：both＝縮放＋旋轉、scale＝僅縮放、rotate＝僅旋轉 */
-    gesture: 'both'
+    /* 多點觸控：scale＝僅縮放、rotate＝僅旋轉（不提供同時縮放＋旋轉） */
+    gesture: 'scale'
   };
   var NEEDLE_SIZE = 169.4;   /* 磁針圖寬＝天池直徑（羅盤座標單位） */
   var NEEDLE_K    = 1.00;
@@ -1150,16 +1152,16 @@
 
   /* =============== 多點觸控鎖定（全部圖層共用） =============== */
   var gestureBtn = document.getElementById('gestureBtn');
-  var GESTURES = [ ['both','縮＋轉'], ['scale','僅縮放'], ['rotate','僅旋轉'] ];
   function syncGestureBtn(){
-    for(var i=0;i<GESTURES.length;i++) if(GESTURES[i][0] === S.gesture) gestureBtn.textContent = GESTURES[i][1];
-    gestureBtn.classList.toggle('on', S.gesture !== 'both');
+    var isScale = (S.gesture === 'scale');
+    gestureBtn.textContent = isScale ? '🔍 僅縮放' : '🔄 僅旋轉';
+    gestureBtn.classList.toggle('gs-scale', isScale);
+    gestureBtn.classList.toggle('gs-rotate', !isScale);
   }
   gestureBtn.addEventListener('click', function(){
-    var i = 0; for(var j=0;j<GESTURES.length;j++) if(GESTURES[j][0] === S.gesture) i = j;
-    S.gesture = GESTURES[(i+1) % GESTURES.length][0];
+    S.gesture = (S.gesture === 'scale') ? 'rotate' : 'scale';
     syncGestureBtn();
-    toast('雙指手勢：' + gestureBtn.textContent + '（全部圖層適用）');
+    toast('雙指手勢：' + (S.gesture === 'scale' ? '僅縮放' : '僅旋轉') + '（全部圖層適用）');
     if(pts.size >= 2) beginPinch();   /* 手勢進行中切換也立即生效 */
   });
 
