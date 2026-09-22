@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#191310">
-<title>後天八卦二十四山羅盤 v1.8.0</title>
+<title>後天八卦二十四山羅盤 v1.9.0</title>
 <style>
   :root{
     --text:#f2e9dc; --dim:#c3b39c; --accent:#e05a5f; --gold:#d8a94f;
@@ -111,6 +111,8 @@
 
   .icobtn.gl{width:auto;padding:0 9px;font-size:11px;font-weight:800;white-space:nowrap;}
   #readout .nd b{color:#9fd3ff;}
+  #readout .ph b{color:#ffb86b;}
+  input.rotin{width:74px;}
   .sz{font-size:17px;font-weight:900;color:#ff6b6b;letter-spacing:1px;}
   #needleModeSeg .btn.on{background:var(--accent);border-color:var(--accent);color:#fff;}
   #mdW.on,#mdE.on{background:var(--accent);border-color:var(--accent);color:#fff;}
@@ -145,8 +147,9 @@
       <div class="cp"><span class="lbl">羅盤</span><b id="roCompass">0.0°</b></div>
       <div class="hd" id="roHeadingRow" style="display:none;"><span class="lbl">方位</span><b id="roHeading">--</b></div>
       <div class="ln" id="roLineRow" style="display:none;"><span class="lbl">十字線</span><b id="roLine">--</b></div>
+      <div class="ph" id="roPhoneRow" style="display:none;"><span class="lbl">紅點手機方位</span><b id="roPhone">--</b></div>
       <div class="nd" id="roNeedleRow" style="display:none;"><span class="lbl" id="roNeedleLbl">磁針</span><b id="roNeedle">--</b></div>
-      <div class="verrow"><span class="ver" id="verTag">v1.8.0</span></div>
+      <div class="verrow"><span class="ver" id="verTag">v1.9.0</span></div>
     </div>
 
     <div id="dock">
@@ -174,6 +177,12 @@
                 <button class="btn sm" id="cRotR">15↻</button>
               </div>
             </div>
+          </div>
+          <div class="rowx">
+            <span class="lbl-s">旋轉角度</span>
+            <input type="number" class="rotin" id="cRotIn" inputmode="decimal" step="0.1" placeholder="0–359.9">
+            <button class="btn sm" id="cRotSet">設定</button>
+            <span class="lbl-s">目前</span><span class="val-s" id="cRotCur">0.0°</span>
           </div>
           <div class="rowx">
             <input type="number" id="degIn" inputmode="decimal" min="0" max="359.9" step="0.1" placeholder="度數">
@@ -213,6 +222,12 @@
                 <button class="btn sm" id="bRotR">15↻</button>
               </div>
             </div>
+          </div>
+          <div class="rowx">
+            <span class="lbl-s">旋轉角度</span>
+            <input type="number" class="rotin" id="bRotIn" inputmode="decimal" step="0.1" placeholder="0–359.9">
+            <button class="btn sm" id="bRotSet">設定</button>
+            <span class="lbl-s">目前</span><span class="val-s" id="bRotCur">0.0°</span>
           </div>
           <div class="rowx">
             <span class="lbl-s">圖上方</span><span class="val-s" id="bgMetaTop">0.0°</span>
@@ -259,7 +274,17 @@
             <button class="btn sm" id="lRotR">15↻</button>
           </div>
           <div class="rowx">
+            <span class="lbl-s">旋轉角度</span>
+            <input type="number" class="rotin" id="lRotIn" inputmode="decimal" step="0.1" placeholder="0–359.9">
+            <button class="btn sm" id="lRotSet">設定</button>
+            <span class="lbl-s">目前</span><span class="val-s" id="lRotCur">0.0°</span>
+          </div>
+          <div class="rowx">
             <span class="lbl-s">坐向</span><b id="lineSZ" class="sz">—</b>
+          </div>
+          <div class="rowx">
+            <span class="lbl-s">紅點手機方位</span><b id="linePhone" class="sz" style="color:#ffb86b;">—</b>
+            <span class="note" style="flex:0 1 auto;min-width:0;">（手機正上方＝0°，順時針）</span>
           </div>
           <div class="note">每按一次新增一組十字線：實線為主軸、虛線為垂直軸，恆保持 90°。紅點沿天池邊緣標示主軸所「向」，對面即為所「坐」；刻度依羅盤印製度數計算。選取後在畫面上拖曳即可整組旋轉。</div>
         </div>
@@ -288,10 +313,16 @@
             </div>
           </div>
           <div class="rowx">
+            <span class="lbl-s">群組旋轉</span>
+            <input type="number" class="rotin" id="gRotIn" inputmode="decimal" step="0.1" placeholder="0–359.9">
+            <button class="btn sm" id="gRotSet">設定</button>
+            <span class="lbl-s">目前</span><span class="val-s" id="gRotCur">0.0°</span>
+          </div>
+          <div class="rowx">
             <span class="lbl-s">群組角度</span><span class="val-s" id="gRotVal">0.0°</span>
             <span class="lbl-s">倍率</span><span class="val-s" id="gScaleVal">100%</span>
           </div>
-          <div class="note">底圖＋羅盤＋十字線視為同一整體一起位移／旋轉／縮放，各層之間的相對關係完全不變。在此頁直接拖曳＝整體移動，雙指＝整體縮放旋轉。</div>
+          <div class="note">底圖＋羅盤＋十字線視為同一整體一起位移／旋轉／縮放，各層之間的相對關係完全不變。以「載入底圖當下的畫面」為群組 0°，輸入 180 即全部圖層一起轉 180°。在此頁直接拖曳＝整體移動，雙指＝整體縮放旋轉。</div>
         </div>
 
       </div>
@@ -340,9 +371,9 @@
   "use strict";
 
   /* =============== 版本 =============== */
-  var APP_VERSION = 'v1.8.0';
-  var APP_DATE    = '2026-09-21';
-  var CHANGELOG   = 'v1.8.0（2026-09-21）十字線改細、主軸實線／垂直軸虛線、紅點改沿天池邊緣、新增二十四山坐向顯示';
+  var APP_VERSION = 'v1.9.0';
+  var APP_DATE    = '2026-09-22';
+  var CHANGELOG   = 'v1.9.0（2026-09-22）新增紅點手機方位、各圖層旋轉角度輸入、群組以載入底圖當下為 0°；修正刪除最後一條十字線後讀數未隱藏';
 
   /* =============== 狀態 =============== */
   var S = {
@@ -370,6 +401,7 @@
   function mountainOf(d){ return MOUNTAINS[Math.floor(n360(d + 7.5) / 15) % 24]; }
   /* 十字線紅點所指的羅盤刻度（紅點方向＝向） */
   function lineDial(L){ return n360(L.angle - 180 - S.compass.rot); }
+  function linePhone(L){ return n360(L.angle + S.group.rot); }
   function zuoXiang(L){
     var d = lineDial(L);
     return '坐' + mountainOf(d + 180) + '向' + mountainOf(d);
@@ -556,7 +588,7 @@
     var nd = needleOnDial();
     if(S.needle.mode !== 'off' && nd != null) lines.push({ t:'磁針' + S.needle.mode + ' ' + fmt(nd), col:'#9fd3ff' });
     S.lines.forEach(function(L, i){
-      lines.push({ t:'十字' + (i+1) + ' ' + zuoXiang(L) + ' ' + fmt(lineDial(L)), col:'#ff6b6b' });
+      lines.push({ t:'十字' + (i+1) + ' ' + zuoXiang(L) + ' ' + fmt(lineDial(L)) + '｜手機 ' + fmt(linePhone(L)), col:'#ff6b6b' });
     });
 
     var fs = clamp(Math.round(Math.min(w,h) * 0.035), 12, 22);
@@ -631,11 +663,24 @@
     if(S.heading != null){ hr.style.display = 'flex'; document.getElementById('roHeading').textContent = fmt(S.heading); }
     else hr.style.display = 'none';
     var lr = document.getElementById('roLineRow');
+    var pr = document.getElementById('roPhoneRow');
     var L = S.lines.find(function(x){ return x.id === S.activeLine; });
-    if(L){ lr.style.display = 'flex'; document.getElementById('roLine').textContent = zuoXiang(L) + ' ' + fmt(lineDial(L)); }
-    var sz = document.getElementById('lineSZ');
-    if(sz) sz.textContent = L ? (zuoXiang(L) + '　' + fmt(lineDial(L))) : '—';
-    else lr.style.display = 'none';
+    if(L){
+      lr.style.display = 'flex';
+      pr.style.display = 'flex';
+      document.getElementById('roLine').textContent = zuoXiang(L) + ' ' + fmt(lineDial(L));
+      document.getElementById('roPhone').textContent = fmt(linePhone(L));
+    } else {
+      lr.style.display = 'none';
+      pr.style.display = 'none';
+    }
+    document.getElementById('lineSZ').textContent = L ? (zuoXiang(L) + '　' + fmt(lineDial(L))) : '—';
+    document.getElementById('linePhone').textContent = L ? fmt(linePhone(L)) : '—';
+    /* 各圖層自身旋轉角 */
+    document.getElementById('cRotCur').textContent = fmt(S.compass.rot);
+    document.getElementById('bRotCur').textContent = S.bg.img ? fmt(S.bg.rot) : '—';
+    document.getElementById('lRotCur').textContent = L ? fmt(L.angle) : '—';
+    document.getElementById('gRotCur').textContent = fmt(S.group.rot);
     var nrw = document.getElementById('roNeedleRow');
     var nd = needleOnDial();
     if(S.needle.mode !== 'off' && nd != null){
@@ -821,9 +866,10 @@
     rd.onload = function(ev){
       var im = new Image();
       im.onload = function(){
+        bakeGroup();   /* 以載入底圖當下的畫面為群組 0° */
         S.bg.img = im; S.bg.natW = im.naturalWidth; S.bg.natH = im.naturalHeight;
         S.bg.x=0; S.bg.y=0; S.bg.scale=1; S.bg.rot=0;
-        setTab('bg'); draw();
+        setTab('bg'); draw(); syncReadout(); syncGroupUI();
         openMetaDlg(true);
       };
       im.onerror = function(){ toast('圖片載入失敗，請換一張試試'); };
@@ -983,6 +1029,54 @@
     S.group.x=0; S.group.y=0; S.group.scale=1; S.group.rot=0;
     draw(); syncGroupUI(); syncReadout();
     toast('群組變換已重設（各圖層自身設定不變）');
+  });
+
+  /* =============== 群組歸零：把群組變換併入各圖層 =============== */
+  function bakeGroup(){
+    var G = S.group;
+    if(G.x === 0 && G.y === 0 && G.scale === 1 && G.rot === 0) return;
+    var r = G.rot * Math.PI/180, sc = G.scale, cs = Math.cos(r), sn = Math.sin(r);
+    function bakeLayer(o){
+      var x = o.x, y = o.y;
+      o.x = G.x + (x*cs - y*sn) * sc;
+      o.y = G.y + (x*sn + y*cs) * sc;
+      o.scale = clamp(o.scale * sc, 0.05, 30);
+      o.rot = n360(o.rot + G.rot);
+    }
+    bakeLayer(S.compass);
+    if(S.bg.img) bakeLayer(S.bg);
+    S.lines.forEach(function(L){ L.angle = n360(L.angle + G.rot); });
+    S.group.x = 0; S.group.y = 0; S.group.scale = 1; S.group.rot = 0;
+  }
+
+  /* =============== 各圖層旋轉角度輸入 =============== */
+  function readRotIn(id){
+    var v = parseFloat(document.getElementById(id).value);
+    if(isNaN(v)){ toast('請輸入有效角度（0–359.9）'); return null; }
+    return n360(v);
+  }
+  document.getElementById('cRotSet').addEventListener('click', function(){
+    var v = readRotIn('cRotIn'); if(v == null) return;
+    S.compass.rot = v; S.follow = false; updFollowBtn(); draw(); syncReadout();
+    toast('羅盤旋轉角度設為 ' + fmt(v));
+  });
+  document.getElementById('bRotSet').addEventListener('click', function(){
+    if(!needBg()) return;
+    var v = readRotIn('bRotIn'); if(v == null) return;
+    S.bg.rot = v; draw(); syncReadout();
+    toast('底圖旋轉角度設為 ' + fmt(v));
+  });
+  document.getElementById('lRotSet').addEventListener('click', function(){
+    var L = S.lines.find(function(x){ return x.id === S.activeLine; });
+    if(!L){ toast('請先新增或選取十字線'); return; }
+    var v = readRotIn('lRotIn'); if(v == null) return;
+    L.angle = v; draw(); syncReadout();
+    toast('十字線旋轉角度設為 ' + fmt(v));
+  });
+  document.getElementById('gRotSet').addEventListener('click', function(){
+    var v = readRotIn('gRotIn'); if(v == null) return;
+    S.group.rot = v; S.follow = false; updFollowBtn(); draw(); syncGroupUI(); syncReadout();
+    toast('全部圖層一起轉到 ' + fmt(v));
   });
 
   /* =============== 磁針 =============== */
